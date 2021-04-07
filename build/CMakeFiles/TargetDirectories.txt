@@ -1,5 +1,0 @@
-/media/fishermanykx/D/Computer_Science/Software_Testing/Exercises/1_MCDC/code/build/CMakeFiles/rebuild_cache.dir
-/media/fishermanykx/D/Computer_Science/Software_Testing/Exercises/1_MCDC/code/build/CMakeFiles/edit_cache.dir
-/media/fishermanykx/D/Computer_Science/Software_Testing/Exercises/1_MCDC/code/build/src/CMakeFiles/rebuild_cache.dir
-/media/fishermanykx/D/Computer_Science/Software_Testing/Exercises/1_MCDC/code/build/src/CMakeFiles/edit_cache.dir
-/media/fishermanykx/D/Computer_Science/Software_Testing/Exercises/1_MCDC/code/build/src/CMakeFiles/demoPass1.dir
