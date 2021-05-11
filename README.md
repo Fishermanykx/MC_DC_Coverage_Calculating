@@ -2,8 +2,6 @@
 This is a tool that can analyse MC/DC coverage of a program.
 Only my homework for Software Testing, so don't expect it being fast.
 
-
-
 ## How to run this code
 
 Below I will use the pass `originalSample` for the example. Make sure that the pass to be compiled is that pass.
@@ -16,8 +14,6 @@ In the directory `./build` run the commands below
 cmake ..
 make
 ```
-
-
 
 ### For codes that needs instrumentation
 
@@ -37,8 +33,6 @@ clang -o test libruntime.so test.instrumented.ll
 ./test
 ```
 
-
-
 ### For codes that do not need instrumentation
 
 Run the  commands in the directory `.` (project root dir)
@@ -47,3 +41,4 @@ Run the  commands in the directory `.` (project root dir)
 clang -Xclang -load -Xclang build/src/liboriginalSample.so test.c
 ```
 
+Now it's far from being finished, please wait for 1~2 weeks before all the things are done.
