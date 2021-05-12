@@ -6,4 +6,7 @@
 build/
 doc/
 
+#.DS_Store
+.DS_Store
+
 *note*.md
