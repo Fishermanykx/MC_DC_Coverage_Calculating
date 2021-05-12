@@ -4,7 +4,7 @@
  * @Author: Fishermanykx
  * @Date: 2021-05-03 09:28:02
  * @LastEditors: Fishermanykx
- * @LastEditTime: 2021-05-12 16:12:00
+ * @LastEditTime: 2021-05-12 16:45:39
  */
 
 #include "ProjHeaders.h"
@@ -17,6 +17,7 @@ struct ConditionCoverage : public FunctionPass {
   ConditionCoverage() : FunctionPass(ID) {}
 
   int totalConditions = 0;
+  int totalBranches = 0;
   bool runOnFunction(Function &curFunc) override {
     bool hasChanged = false;
 
@@ -70,6 +71,17 @@ struct ConditionCoverage : public FunctionPass {
 
     // Get terminator basicblock of the funcrtion
     for (auto bb = curFunc.begin(); bb != curFunc.end(); ++bb) {
+      std::string bbName = bb->getName().str();
+
+      if (bbName.empty()) {
+        errs() << "This block do not have a name\n";
+      } else {
+        errs() << "Name of the bb is: " << bbName << "\n";
+        if (bbName == "if.then") {
+          ++totalBranches;
+        }
+      }
+
       for (auto ii = bb->begin(); ii != bb->end(); ++ii) {
         if (ReturnInst *RI = dyn_cast<ReturnInst>(ii)) {
           // bb is a terminator basicblock

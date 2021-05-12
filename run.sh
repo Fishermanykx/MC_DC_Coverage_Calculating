@@ -12,8 +12,9 @@
 
 g++ runtime.cpp -fPIC -shared -o libruntime.so
 clang -emit-llvm -S -fno-discard-value-names -c test.c -o test.ll
+# opt -load build/src/liboriginalSample.so -originalSample -S test.ll -o test.instrumented.ll
 # opt -load build/src/libBranchCoverage.so -BranchCoverage -S test.ll -o test.instrumented.ll
 opt -load build/src/libConditionCoverage.so -ConditionCoverage -S test.ll -o test.instrumented.ll
-# opt -load build/src/liboriginalSample.so -originalSample -S test.ll -o test.instrumented.ll
+# opt -load build/src/libConditionCoverage.so -ConditionCoverage -S test.ll -o test.instrumented.ll
 clang -o test libruntime.so test.instrumented.ll
 ./test
