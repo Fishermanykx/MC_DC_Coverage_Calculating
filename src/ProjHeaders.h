@@ -3,11 +3,11 @@
  * @Author: Fishermanykx
  * @Date: 2021-03-25 15:38:46
  * @LastEditors: Fishermanykx
- * @LastEditTime: 2021-05-11 09:39:29
+ * @LastEditTime: 2021-05-11 22:04:46
  */
 
 #include <cstdio>
-#include <sstream>
+#include <iostream>
 #include <string>
 
 // #include "clang/AST/ASTConsumer.h"
@@ -21,11 +21,14 @@
 // #include "clang/Frontend/FrontendActions.h"
 // #include "clang/Tooling/CommonOptionsParser.h"
 // #include "clang/Tooling/Tooling.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
