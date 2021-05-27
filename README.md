@@ -9,9 +9,47 @@ Coverage = \frac{\text{the number of valid test cases}}{2 * \text{the number of 
 $$
 
 
+## File structure
+```shell
+.
+├── build
+│   ├── CMakeCache.txt
+│   ├── CMakeFiles
+│   ├── cmake_install.cmake
+│   ├── compile_commands.json
+│   ├── Makefile
+│   └── src
+├── cfg_func.png
+├── CMakeLists.txt
+├── libruntime.so
+├── LICENSE
+├── prev_code
+│   ├── Cond_runtime.cpp
+│   ├── ProjHeaders.h
+│   ├── way1_MCDCCoverage.cpp
+│   ├── way1_runtime.cpp
+│   ├── way2_MCDCCoverage.cpp
+│   └── way2_runtime.cpp
+├── README.md
+├── run.sh
+├── runtime.cpp
+├── src
+│   ├── CMakeLists.txt
+│   ├── ConditionCoverage.cpp
+│   ├── demoPass1.cpp
+│   ├── helloPass.cpp
+│   ├── MCDCCoverage.cpp
+│   ├── originalSample.cpp
+│   └── ProjHeaders.h
+├── test
+├── test.c
+├── test.instrumented.ll
+└── test.ll
+```
+
 ## How to run this code
 
-Below I will use the pass `originalSample` for the example. Make sure that the pass to be compiled is that pass.
+Below I will use the pass `MCDCCoverage` for the example. Make sure that the pass to be compiled is that pass.
 
 ### Compile the Pass
 
@@ -28,24 +66,25 @@ Run the  commands in the directory `.` (project root dir)
 
 `test.c` is the module to be tested
 
-`originalSample` is the name of the sample Pass
+`MCDCCoverage` is the name of the Pass
 
 `runtime.cpp` contains external functions to be instrumented
 
 ```shell
 g++ runtime.cpp -fPIC -shared -o libruntime.so
 clang -emit-llvm -S -fno-discard-value-names -c test.c test.ll
-opt -load bulid/src/liboriginalSample.so -originalSample -S test.ll test.instrumented.ll
-clang -o test libruntime.so test.instrumented.ll 
+opt -load build/src/libMCDCCoverage.so -MCDCCoverage -S test.ll -o test.instrumented.ll
+clang -o test libruntime.so test.instrumented.ll
 ./test
 ```
+You can also run `run.sh` directly
+
 
 ### For codes that do not need instrumentation
 
+Take the pass `origonalSample` for example
 Run the  commands in the directory `.` (project root dir)
 
 ```shell
 clang -Xclang -load -Xclang build/src/liboriginalSample.so test.c
 ```
-
-Now it's almost done, but I won't upload the finished version until the course end. If anyone needs the finished files for scientific study, please email me or open an issue. My email address is: fishermanykx.mail@gmail.com
