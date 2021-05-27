@@ -48,4 +48,4 @@ Run the  commands in the directory `.` (project root dir)
 clang -Xclang -load -Xclang build/src/liboriginalSample.so test.c
 ```
 
-Now it's far from being finished, please wait for 1~2 weeks before all the things are done.
+Now it's almost done, but I won't upload the finished version until the course end. If anyone needs the finished files for scientific study, please email me or open an issue. My email address is: fishermanykx.mail@gmail.com
