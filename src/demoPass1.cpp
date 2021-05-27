@@ -7,7 +7,7 @@
  * @Author: Fishermanykx
  * @Date: 2021-03-25 16:10:20
  * @LastEditors: Fishermanykx
- * @LastEditTime: 2021-05-11 09:27:37
+ * @LastEditTime: 2021-05-14 09:46:29
  */
 
 #include "ProjHeaders.h"
@@ -43,7 +43,7 @@ struct TraverseFunc : public FunctionPass {
       Instruction *ti = bb.getTerminator();
       // ti->printAsOperand(errs());
       // std::cout << std::endl;
-      if (ti) errs() << *ti << "\n";
+      // if (ti) errs() << *ti << "\n";
       // dyn_cast: 检测 ti 是否为 llvm::BranchInst 类型，如果不是返回空指针
       // 如果是返回指向该类型的指针
       auto *bri = llvm::dyn_cast<llvm::BranchInst>(ti);
@@ -61,8 +61,23 @@ struct TraverseFunc : public FunctionPass {
       auto cmpi = llvm::dyn_cast<llvm::ICmpInst>(cond);  // icmp instruction
       if (!cmpi) continue;
 
+      cmpi->print(errs());
+      errs() << "\n";
+
       auto *opA = cmpi->getOperand(0);  // Operand 0 and its definition
       auto *opB = cmpi->getOperand(1);  // Operand 1 and its definition
+
+      // opA->print(errs());
+      // errs() << "\t";
+
+      // opA->printAsOperand(errs(), true);
+
+      // errs() << "\n";
+
+      auto cmpi_res = cmpi->getPredicate();
+      auto res_name = cmpi->getPredicateName(cmpi_res);
+
+      errs() << cmpi_res << "\t" << res_name << "\n\n";
 
       auto argsA = llvm::ArrayRef<llvm::Value *>(&opA, 1);
       auto argsB = llvm::ArrayRef<llvm::Value *>(&opB, 1);

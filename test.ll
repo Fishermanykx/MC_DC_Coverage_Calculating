@@ -10,27 +10,55 @@ define dso_local i32 @func(i32 %a, i32 %b) #0 {
 entry:
   %a.addr = alloca i32, align 4
   %b.addr = alloca i32, align 4
+  %c = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
   store i32 %b, i32* %b.addr, align 4
   %0 = load i32, i32* %a.addr, align 4
-  %cmp = icmp sge i32 %0, 0
+  store i32 %0, i32* %c, align 4
+  %1 = load i32, i32* %a.addr, align 4
+  %cmp = icmp sge i32 %1, 1
   br i1 %cmp, label %land.lhs.true, label %if.end
 
 land.lhs.true:                                    ; preds = %entry
-  %1 = load i32, i32* %b.addr, align 4
-  %2 = load i32, i32* %a.addr, align 4
-  %cmp1 = icmp sgt i32 %1, %2
+  %2 = load i32, i32* %b.addr, align 4
+  %3 = load i32, i32* %a.addr, align 4
+  %cmp1 = icmp sgt i32 %2, %3
   br i1 %cmp1, label %if.then, label %if.end
 
 if.then:                                          ; preds = %land.lhs.true
-  %3 = load i32, i32* %a.addr, align 4
-  %add = add nsw i32 %3, 1
-  store i32 %add, i32* %a.addr, align 4
+  %4 = load i32, i32* %c, align 4
+  %add = add nsw i32 %4, 1
+  store i32 %add, i32* %c, align 4
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %land.lhs.true, %entry
-  %4 = load i32, i32* %a.addr, align 4
-  ret i32 %4
+  %5 = load i32, i32* %a.addr, align 4
+  %cmp2 = icmp sge i32 %5, 1
+  br i1 %cmp2, label %land.lhs.true3, label %lor.lhs.false
+
+land.lhs.true3:                                   ; preds = %if.end
+  %6 = load i32, i32* %c, align 4
+  %cmp4 = icmp sle i32 %6, 2
+  br i1 %cmp4, label %if.then8, label %lor.lhs.false
+
+lor.lhs.false:                                    ; preds = %land.lhs.true3, %if.end
+  %7 = load i32, i32* %b.addr, align 4
+  %cmp5 = icmp sgt i32 %7, 3
+  br i1 %cmp5, label %land.lhs.true6, label %if.end9
+
+land.lhs.true6:                                   ; preds = %lor.lhs.false
+  %8 = load i32, i32* %b.addr, align 4
+  %cmp7 = icmp slt i32 %8, 5
+  br i1 %cmp7, label %if.then8, label %if.end9
+
+if.then8:                                         ; preds = %land.lhs.true6, %land.lhs.true3
+  %9 = load i32, i32* %c, align 4
+  store i32 %9, i32* %a.addr, align 4
+  br label %if.end9
+
+if.end9:                                          ; preds = %if.then8, %land.lhs.true6, %lor.lhs.false
+  %10 = load i32, i32* %a.addr, align 4
+  ret i32 %10
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
@@ -51,43 +79,27 @@ entry:
   %retval = alloca i32, align 4
   %a = alloca i32, align 4
   %b = alloca i32, align 4
-  %c = alloca i32, align 4
   store i32 0, i32* %retval, align 4
   store i32 0, i32* %a, align 4
   store i32 1, i32* %b, align 4
-  store i32 1, i32* %c, align 4
   %0 = load i32, i32* %a, align 4
   %1 = load i32, i32* %b, align 4
   %call = call i32 @func(i32 %0, i32 %1)
-  store i32 %call, i32* %a, align 4
+  store i32 1, i32* %a, align 4
+  store i32 1, i32* %b, align 4
   %2 = load i32, i32* %a, align 4
   %3 = load i32, i32* %b, align 4
-  %cmp = icmp slt i32 %2, %3
-  br i1 %cmp, label %land.lhs.true, label %if.end
-
-land.lhs.true:                                    ; preds = %entry
-  %4 = load i32, i32* %b, align 4
-  %5 = load i32, i32* %c, align 4
-  %cmp1 = icmp sge i32 %4, %5
-  br i1 %cmp1, label %land.lhs.true2, label %if.end
-
-land.lhs.true2:                                   ; preds = %land.lhs.true
-  %6 = load i32, i32* %c, align 4
-  %7 = load i32, i32* %a, align 4
-  %cmp3 = icmp sge i32 %6, %7
-  br i1 %cmp3, label %if.then, label %if.end
-
-if.then:                                          ; preds = %land.lhs.true2
-  %8 = load i32, i32* %a, align 4
-  %9 = load i32, i32* %b, align 4
-  %10 = load i32, i32* %c, align 4
-  %sub = sub nsw i32 %9, %10
-  %add = add nsw i32 %sub, 1
-  %div = sdiv i32 %8, %add
-  store i32 %div, i32* %a, align 4
-  br label %if.end
-
-if.end:                                           ; preds = %if.then, %land.lhs.true2, %land.lhs.true, %entry
+  %call1 = call i32 @func(i32 %2, i32 %3)
+  store i32 2, i32* %a, align 4
+  store i32 3, i32* %b, align 4
+  %4 = load i32, i32* %a, align 4
+  %5 = load i32, i32* %b, align 4
+  %call2 = call i32 @func(i32 %4, i32 %5)
+  store i32 2, i32* %a, align 4
+  store i32 4, i32* %b, align 4
+  %6 = load i32, i32* %a, align 4
+  %7 = load i32, i32* %b, align 4
+  %call3 = call i32 @func(i32 %6, i32 %7)
   ret i32 0
 }
 

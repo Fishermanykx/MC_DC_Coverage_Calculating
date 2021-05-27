@@ -1,10 +1,11 @@
 /*
  * @Description: 条件覆盖率
- * 最终实现的不是条件覆盖率，只是某种计算形式
+ * 然而最终实现的不是条件覆盖率，只是某种计算形式
+ * 反正只是为了做 MC/DC 覆盖率熟悉一下 API，结果怎么样都无所谓了 ╮(╯_╰)╭
  * @Author: Fishermanykx
  * @Date: 2021-05-03 09:28:02
  * @LastEditors: Fishermanykx
- * @LastEditTime: 2021-05-12 16:45:39
+ * @LastEditTime: 2021-05-27 16:08:09
  */
 
 #include "ProjHeaders.h"
