@@ -1,6 +1,13 @@
 # MC-DC_Coverage_Calculating
-This is a tool that can analyse MC/DC coverage of a program.
+This is a tool that can analyze MC/DC coverage of a program.
 Only my homework for Software Testing, so don't expect it being fast.
+
+Method to calculate coverage:
+$$
+Coverage = \frac{\text{the number of valid test cases}}{2 * \text{the number of conditions}}\\
+\text{"valid" means in this test case, one condition can infact result of the decision independently}
+$$
+
 
 ## How to run this code
 
