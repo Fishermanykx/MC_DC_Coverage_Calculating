@@ -23,13 +23,6 @@ $$
 ├── CMakeLists.txt
 ├── libruntime.so
 ├── LICENSE
-├── prev_code
-│   ├── Cond_runtime.cpp
-│   ├── ProjHeaders.h
-│   ├── way1_MCDCCoverage.cpp
-│   ├── way1_runtime.cpp
-│   ├── way2_MCDCCoverage.cpp
-│   └── way2_runtime.cpp
 ├── README.md
 ├── run.sh
 ├── runtime.cpp
