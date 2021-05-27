@@ -5,6 +5,7 @@
 
 build/
 doc/
+prev_code/
 
 #.DS_Store
 .DS_Store
