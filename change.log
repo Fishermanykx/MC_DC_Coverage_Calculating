@@ -1,0 +1,4 @@
+Version log
+v0.1 (2021.5.27 finished): 支持简单的 if 语句，待测源码假定均在 func 函数中
+v0.2 (2021.5.31 finished): 支持嵌套的 if 语句，待测源码假定均在 func 函数中
+v0.3 (unfinished): 支持嵌套的 if, for 和 while(含 do...while) 语句，待测源码假定均在 func 函数中

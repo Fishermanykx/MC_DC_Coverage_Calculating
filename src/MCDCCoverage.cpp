@@ -3,7 +3,7 @@
  * @Author: Fishermanykx
  * @Date: 2021-05-12 16:15:37
  * @LastEditors: Fishermanykx
- * @LastEditTime: 2021-05-27 16:03:27
+ * @LastEditTime: 2021-05-31 12:49:16
  */
 #include "ProjHeaders.h"
 
@@ -36,7 +36,7 @@ struct MCDCCoverage : public FunctionPass {
         "mainInit", Type::getVoidTy(Cxt));
     FunctionCallee updateNameFunc = curFunc.getParent()->getOrInsertFunction(
         "updateNameTable", Type::getVoidTy(Cxt), Type::getInt8PtrTy(Cxt),
-        Type::getInt8PtrTy(Cxt));
+        Type::getInt8PtrTy(Cxt), Type::getInt32Ty(Cxt));
     FunctionCallee updateCondFunc = curFunc.getParent()->getOrInsertFunction(
         "updateCondTable", Type::getVoidTy(Cxt), Type::getInt8PtrTy(Cxt),
         Type::getInt8PtrTy(Cxt), Type::getInt8PtrTy(Cxt), Type::getInt32Ty(Cxt),
@@ -57,9 +57,14 @@ struct MCDCCoverage : public FunctionPass {
     // }
 
     // Get conditions whose basicblock is actually executed
-    std::string termLabel = "if.end";
+    std::string termLabel = ".end";
+    std::string ifTermLabel = "if.end";
     std::string thenLabel = "if.then";
+    std::string whileTermLabel = "while.body";
+    std::string forTermLabel = "for.body";
     // int deciCnt = 0;
+
+    std::vector<std::vector<std::string> > singleFuncNameTable;
 
     for (Function::iterator bb = curFunc.begin(); bb != curFunc.end(); ++bb) {
       std::string bbNameStr = bb->getName().str();
@@ -97,33 +102,44 @@ struct MCDCCoverage : public FunctionPass {
       }
     }
 
-    /*       // If cur BasicBlock is if.end*
-          if (bbNameStr.find(termLabel) != std::string::npos) {
-            auto ii = bb->begin();
-            IRBuilder<> builder(&*ii);
-            builder.SetInsertPoint(&*bb, builder.GetInsertPoint());
-
-            Value *funcNameVal = builder.CreateGlobalStringPtr(funcName);
-            Value *args[] = {funcNameVal, builder.getInt32(deciCnt)};
-
-            builder.CreateCall(updateCondFunc, args);
-
-            // std::cout << "In Func: " << funcNameStr << std::endl;
-            // std::cout << "Branch cnt: " << deciCnt << std::endl;
-
-            ++deciCnt;
-          }
-        } */
-
     // Get Name of each basicblock and construct name table
     std::vector<std::string> singleDecision;
 
     for (Function::iterator bb = curFunc.begin(); bb != curFunc.end(); ++bb) {
       std::string bbNameStr = bb->getName().str();
       const char *bbName = bbNameStr.c_str();
+      auto startInst = bb->begin();
 
-      if (bbNameStr.find(termLabel) != std::string::npos) {
+      int isWhileBody = (bbNameStr.find(whileTermLabel) != std::string::npos);
+      int isForBody = (bbNameStr.find(forTermLabel) != std::string::npos);
+      int isIfEnd = (bbNameStr.find(ifTermLabel) != std::string::npos);
+      int isIfThen = (bbNameStr.find("if.then") != std::string::npos);
+
+      if (startInst->getOpcode() == Instruction::PHI) {
+        // If bbName is land.end* or lor.end*, skip
+        continue;
+      }
+      if (bbNameStr.find("for.end") != std::string::npos ||
+          bbNameStr.find("while.end") != std::string::npos) {
+        continue;
+      }
+
+      // Check if new decision begins
+      int newDeciBegin = 0;
+      if (bbNameStr.find("body") != std::string::npos || isIfEnd || isIfThen) {
+        // If is while.body or for.body, check if a new decision begins
+        for (auto ii = bb->begin(); ii != bb->end(); ++ii) {
+          if (ICmpInst *op = dyn_cast<ICmpInst>(&*ii)) {
+            newDeciBegin = 1;
+            break;
+          }
+        }
+      }
+
+      if (isIfThen || isWhileBody || isForBody) {
+        // If is if.then or *.body, a decision ends, update nameTable
         // printVector(singleDecision);
+
         totalConds += singleDecision.size();
         // if (scanned) {
         //   (std::vector<std::string>()).swap(singleDecision);
@@ -133,22 +149,31 @@ struct MCDCCoverage : public FunctionPass {
         // }
 
         // If it's the end of a branch, pass it to rtlib
-        auto ii = bb->begin();
-        IRBuilder<> builder(&*ii);
-        for (std::vector<std::string>::iterator it = singleDecision.begin();
-             it != singleDecision.end(); ++it) {
-          builder.SetInsertPoint(&*bb, builder.GetInsertPoint());
-          Value *bbNameVal = builder.CreateGlobalStringPtr((*it).c_str());
-          Value *funcNameVal = builder.CreateGlobalStringPtr(funcName);
-          Value *callArgs[] = {funcNameVal, bbNameVal};
-          builder.CreateCall(updateNameFunc, callArgs);
-        }
+
+        /*         IRBuilder<> builder(&*startInst);
+                int firstLoop = 1;
+                for (std::vector<std::string>::iterator it =
+           singleDecision.begin(); it != singleDecision.end(); ++it) {
+                  builder.SetInsertPoint(&*bb, builder.GetInsertPoint());
+                  Value *bbNameVal =
+           builder.CreateGlobalStringPtr((*it).c_str()); Value *funcNameVal =
+           builder.CreateGlobalStringPtr(funcName); Value *callArgs[] =
+           {funcNameVal, bbNameVal, builder.getInt32(firstLoop)};
+                  builder.CreateCall(updateNameFunc, callArgs);
+                  firstLoop = 0;
+                } */
+        singleFuncNameTable.push_back(singleDecision);
+
         // clear
         (std::vector<std::string>()).swap(singleDecision);
-        // Add new start (i.e. if.end)
-        singleDecision.push_back(bbNameStr);
+        // Add a new start if new decision begins
+        if (newDeciBegin) {
+          singleDecision.push_back(bbNameStr);
+        }
       } else {
-        singleDecision.push_back(bbNameStr);
+        if ((isIfEnd && newDeciBegin) || (!isIfEnd)) {
+          singleDecision.push_back(bbNameStr);
+        }
       }
     }
 
@@ -167,6 +192,24 @@ struct MCDCCoverage : public FunctionPass {
             IRBuilder<> sigBuilder(&*ii);
             sigBuilder.SetInsertPoint(&*bb, sigBuilder.GetInsertPoint());
             sigBuilder.CreateCall(scanSigFunc);
+          }
+          if (!singleFuncNameTable.empty()) {
+            IRBuilder<> builder(&*ii);
+            int numDecis = singleFuncNameTable.size();
+            for (int i = 0; i < numDecis; ++i) {
+              std::vector<std::string> singleDeci = singleFuncNameTable[i];
+              int firstLoop = 1;
+              for (std::vector<std::string>::iterator s_it = singleDeci.begin();
+                   s_it != singleDeci.end(); ++s_it) {
+                Value *bbNameVal =
+                    builder.CreateGlobalStringPtr((*s_it).c_str());
+                Value *funcNameVal = builder.CreateGlobalStringPtr(funcName);
+                Value *callArgs[] = {funcNameVal, bbNameVal,
+                                     builder.getInt32(firstLoop)};
+                builder.CreateCall(updateNameFunc, callArgs);
+                firstLoop = 0;
+              }
+            }
           }
         }
       }

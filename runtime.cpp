@@ -3,7 +3,7 @@
  * @Author: Fishermanykx
  * @Date: 2021-04-12 21:52:34
  * @LastEditors: Fishermanykx
- * @LastEditTime: 2021-05-27 16:05:50
+ * @LastEditTime: 2021-05-31 15:59:09
  */
 
 #include <algorithm>
@@ -24,8 +24,14 @@ using namespace std;
 
 int totalCondNum = 0;
 int first_scan = 1;
-string terminLabel = "if.end";
+
+string ifTermLabel = "if.end";
 string thenLabel = "if.then";
+string whileBeginLabel = "while.cond";
+string whileBody = "while.body";
+string forBeginLabel = "for.cond";
+string forBody = "for.body";
+string entryLabel = "entry";
 
 map<string, vector<vector<string> > > nameTable;
 // map<string, vector<vector<string> > > execCondTabe;
@@ -103,8 +109,32 @@ void calMCDCCov() {
     vector<vector<string> > singleFuncNames = it->second;
     vector<map<string, vector<int> > > singleFuncCondVals =
         condTable[funcNameStr];
-    // Iterate over each decision of the function
     int deciNum = singleFuncNames.size();
+    // Update condTable, fill all the blanks with -1
+    // Iterate over nameTable
+    for (int i = 0; i < deciNum; ++i) {
+      map<string, vector<int> > singleDeci = singleFuncCondVals[i];
+      vector<string> singleDeciNames = singleFuncNames[i];
+      int maxLen = singleDeci[singleDeciNames[0]].size();
+      for (vector<string>::iterator name = singleDeciNames.begin();
+           name != singleDeciNames.end(); ++name) {
+        if (singleDeci[*name].size() < maxLen) {
+          condTable[funcNameStr][i][*name].push_back(-1);
+        }
+      }
+    }
+  }
+  printCondTable();
+
+  for (map<string, vector<vector<string> > >::iterator it = nameTable.begin();
+       it != nameTable.end(); ++it) {
+    string funcNameStr = it->first;
+    vector<vector<string> > singleFuncNames = it->second;
+    vector<map<string, vector<int> > > singleFuncCondVals =
+        condTable[funcNameStr];
+    int deciNum = singleFuncNames.size();
+
+    // Iterate over each decision of the function
     for (int i = 0; i < deciNum; ++i) {
       map<string, vector<int> > singleDeci = singleFuncCondVals[i];
       vector<string> singleDeciNames = singleFuncNames[i];
@@ -158,7 +188,7 @@ extern "C" void getScanSig() { first_scan = 0; }
 
 extern "C" void mainInitExit() {
   printNameTable();
-  printCondTable();
+
   calMCDCCov();
 
   printf("\n Main function Exits\n");
@@ -170,11 +200,12 @@ extern "C" void mainInit() {
   atexit(mainInitExit);
 }
 
-extern "C" void updateNameTable(char* funcName, char* bbName) {
+extern "C" void updateNameTable(char* funcName, char* bbName,
+                                int isBeginLabel) {
   string funcNameStr(funcName);
   string bbNameStr(bbName);
 
-  // Judge if the function is already scanned
+  // Check if the part is already scanned
   // If scanned, nameTable need not to be further modified
   if (nameTable.count(funcNameStr)) {
     vector<vector<string> > singleFuncTable = nameTable[funcNameStr];
@@ -195,16 +226,18 @@ extern "C" void updateNameTable(char* funcName, char* bbName) {
 
   if (nameTable.count(funcNameStr)) {
     // If funcName already exists in the table
-    auto isIfEnd = bbNameStr.find(terminLabel);
-    auto isIfThen = bbNameStr.find(thenLabel);
+    /* int isIfEnd = (bbNameStr.find(ifTermLabel) != string::npos);
+    int isIfThen = (bbNameStr.find(thenLabel) != string::npos);
+    int isWhileBody = (bbNameStr.find(whileBeginLabel) != string::npos);
+    int isForBody = (bbNameStr.find(forBeginLabel) != string::npos);
+    int isEntryLabel = (bbNameStr.find(entryLabel) != string::npos); */
 
-    if (isIfEnd != string::npos) {
-      // Is if.end
+    // Check if a new decision begins
+    if (isBeginLabel) {
+      // Is new decision begins
       vector<string> tmp;
       tmp.push_back(bbNameStr);
       nameTable[funcNameStr].push_back(tmp);
-    } else if (isIfThen != string::npos) {
-      // Is if.then, do nothing as it will go back to if.end
     } else {
       int index = nameTable[funcNameStr].size() - 1;
       nameTable[funcNameStr][index].push_back(bbNameStr);
@@ -218,14 +251,23 @@ extern "C" void updateNameTable(char* funcName, char* bbName) {
   }
 }
 
-// Insert after each cmpInst, update condTable
+// FIXME: Insert after each cmpInst, update condTable
 extern "C" void updateCondTable(char* funcName, char* bbName, char* handler,
                                 int lhs, int rhs) {
   string funcNameStr(funcName);
   string bbNameStr(bbName);
 
-  auto isIfEnd = bbNameStr.find(terminLabel);
-  auto isIfThen = bbNameStr.find(thenLabel);
+  int isIfEnd = (bbNameStr.find(ifTermLabel) != string::npos);
+  int isIfThen = (bbNameStr.find(thenLabel) != string::npos);
+  int isWhileBegin = (bbNameStr.find(whileBeginLabel) != string::npos);
+  int isWhileBody = (bbNameStr.find(whileBody) != string::npos);
+  int isForBegin = (bbNameStr.find(forBeginLabel) != string::npos);
+  int isForBody = (bbNameStr.find(forBody) != string::npos);
+  int isEntry = (bbNameStr.find(entryLabel) != string::npos);
+
+  int newDeciStart = isWhileBody || isForBody || isIfEnd || isIfThen ||
+                     isWhileBegin || isForBegin || isEntry;
+
   int max_len = -1;
 
   // cout << bbNameStr << endl;
@@ -233,8 +275,8 @@ extern "C" void updateCondTable(char* funcName, char* bbName, char* handler,
   if (condTable.count(funcNameStr)) {
     // If funcName already exists in the table
 
-    if (isIfEnd != string::npos) {
-      // If is if.end*
+    if (newDeciStart) {
+      // If a new decision starts
       if (first_scan) {
         map<string, vector<int> > newDeci;
         vector<int> tmp;
@@ -243,13 +285,37 @@ extern "C" void updateCondTable(char* funcName, char* bbName, char* handler,
         condTable[funcNameStr].push_back(newDeci);
       } else {
         // Locate the decision
+        int found = 0;
+
         vector<map<string, vector<int> > > allDecis = condTable[funcNameStr];
         int vecSize = allDecis.size();
         for (int i = 0; i < vecSize; ++i) {
-          if (allDecis[i].begin()->first == bbNameStr) {
-            condTable[funcNameStr][i][bbNameStr].push_back(
-                getVal(handler, lhs, rhs));
+          // if (allDecis[i].begin()->first == bbNameStr) {
+          //   condTable[funcNameStr][i][bbNameStr].push_back(
+          //       getVal(handler, lhs, rhs));
+          // }
+          map<string, vector<int> > singleDeci = allDecis[i];
+          for (map<string, vector<int> >::iterator m_it = singleDeci.begin();
+               m_it != singleDeci.end(); ++m_it) {
+            if (m_it->first == bbNameStr) {
+              condTable[funcNameStr][i][bbNameStr].push_back(
+                  getVal(handler, lhs, rhs));
+              found = 1;
+              break;
+            }
           }
+          if (found) {
+            break;
+          }
+        }
+
+        // FIXME: Not being tested yet, may be a bug here
+        if (!found) {
+          map<string, vector<int> > newDeci;
+          vector<int> tmp;
+          tmp.push_back(getVal(handler, lhs, rhs));
+          newDeci[bbNameStr] = tmp;
+          condTable[funcNameStr].push_back(newDeci);
         }
       }
     } else {
@@ -264,6 +330,7 @@ extern "C" void updateCondTable(char* funcName, char* bbName, char* handler,
         // Traverse the nameTable and find which decision bbName belongs to
         vector<vector<string> > allDeciNames = nameTable[funcNameStr];
         int decIndex = -1;
+        string beginBBName;
 
         for (vector<vector<string> >::iterator dec_it = allDeciNames.begin();
              dec_it != allDeciNames.end(); ++dec_it) {
@@ -272,13 +339,15 @@ extern "C" void updateCondTable(char* funcName, char* bbName, char* handler,
           ++decIndex;
           if (find(singDec.begin(), singDec.end(), bbNameStr) !=
               singDec.end()) {
+            beginBBName = singDec[0];
             break;
           }
         }
 
-        // Get max len of all bbNames
+        // FIXME: Get max len of all bbNames
         map<string, vector<int> > curDeci = condTable[funcNameStr][decIndex];
-        max_len = (curDeci.begin()->second).size();
+        max_len = (curDeci[beginBBName]).size();
+        // cout << beginBBName << endl;
 
         if (!curDeci.count(bbNameStr)) {
           // If not exist such key
@@ -289,21 +358,21 @@ extern "C" void updateCondTable(char* funcName, char* bbName, char* handler,
           tmp.push_back(getVal(handler, lhs, rhs));
           condTable[funcNameStr][decIndex][bbNameStr] = tmp;
         } else {
-          // Need not to insert NULL
-          if (curDeci[bbNameStr].size() == (max_len - 1)) {
-            condTable[funcNameStr][decIndex][bbNameStr].push_back(
-                getVal(handler, lhs, rhs));
-
-          } else {  // Need to insert NULL
-            int loopNum = max_len -
-                          condTable[funcNameStr][decIndex][bbNameStr].size() -
-                          1;
-            for (int i = 0; i < loopNum; ++i) {
-              condTable[funcNameStr][decIndex][bbNameStr].push_back(-1);
+          // Update all the conds in the deci
+          vector<string> curDeciNames = allDeciNames[decIndex];
+          for (vector<string>::iterator name = curDeciNames.begin();
+               name != curDeciNames.end(); ++name) {
+            if (curDeci[*name].size() != (max_len - 1)) {
+              int loopNum =
+                  max_len - condTable[funcNameStr][decIndex][*name].size() - 1;
+              for (int i = 0; i < loopNum; ++i) {
+                condTable[funcNameStr][decIndex][*name].push_back(-1);
+              }
             }
-            condTable[funcNameStr][decIndex][bbNameStr].push_back(
-                getVal(handler, lhs, rhs));
           }
+          // Insert current node
+          condTable[funcNameStr][decIndex][bbNameStr].push_back(
+              getVal(handler, lhs, rhs));
         }
       }
     }
@@ -316,6 +385,7 @@ extern "C" void updateCondTable(char* funcName, char* bbName, char* handler,
     singleFuncTable.push_back(tmp);
     condTable[funcNameStr] = singleFuncTable;
   }
+  // printCondTable();
 }
 
 extern "C" void getTotalConditions(int totalConditions) {
