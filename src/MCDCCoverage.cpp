@@ -3,7 +3,7 @@
  * @Author: Fishermanykx
  * @Date: 2021-05-12 16:15:37
  * @LastEditors: Fishermanykx
- * @LastEditTime: 2021-05-31 12:49:16
+ * @LastEditTime: 2021-06-25 10:42:36
  */
 #include "ProjHeaders.h"
 
@@ -34,6 +34,8 @@ struct MCDCCoverage : public FunctionPass {
     // Declaration of runtime lib functions
     FunctionCallee mainInit = curFunc.getParent()->getOrInsertFunction(
         "mainInit", Type::getVoidTy(Cxt));
+    FunctionCallee funcInit = curFunc.getParent()->getOrInsertFunction(
+        "funcInit", Type::getVoidTy(Cxt));
     FunctionCallee updateNameFunc = curFunc.getParent()->getOrInsertFunction(
         "updateNameTable", Type::getVoidTy(Cxt), Type::getInt8PtrTy(Cxt),
         Type::getInt8PtrTy(Cxt), Type::getInt32Ty(Cxt));
@@ -72,11 +74,18 @@ struct MCDCCoverage : public FunctionPass {
 
       for (BasicBlock::iterator ii = bb->begin(); ii != bb->end(); ++ii) {
         // Insert Init func in the front of main Func
-        if (ii == bb->begin() && bb == curFunc.begin() &&
-            funcNameStr == "main") {
-          IRBuilder<> builder(&*ii);
-          builder.SetInsertPoint(&*bb, ++builder.GetInsertPoint());
-          builder.CreateCall(mainInit);
+        if (ii == bb->begin() && bb == curFunc.begin()) {
+          if (funcNameStr == "main") {
+            IRBuilder<> builder(&*ii);
+            builder.SetInsertPoint(&*bb, ++builder.GetInsertPoint());
+            builder.CreateCall(mainInit);
+          } else {
+            IRBuilder<> builder(&*ii);
+            builder.SetInsertPoint(&*bb, ++builder.GetInsertPoint());
+            // Value *funcNameVal = builder.CreateGlobalStringPtr(funcName);
+            // Value *args[] = {funcNameVal};
+            builder.CreateCall(funcInit);
+          }
         }
 
         // If one Icmp Inst is executed, pass its bbName and funcName to
