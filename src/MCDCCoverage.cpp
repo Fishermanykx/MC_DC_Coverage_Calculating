@@ -90,7 +90,7 @@ struct MCDCCoverage : public FunctionPass {
 
         // If one Icmp Inst is executed, pass its bbName and funcName to
         // updateCondFunc and infer val of previous Cond
-        if (ICmpInst *op = dyn_cast<ICmpInst>(&*ii)) {
+        if (CmpInst *op = dyn_cast<CmpInst>(&*ii)) {
           Value *lhs = op->getOperand(0);
           Value *rhs = op->getOperand(1);
           std::string handlerStr =

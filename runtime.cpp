@@ -100,6 +100,23 @@ void printCondTable() {
 void calMCDCCov() {
   int indiCondNum = 0;
 
+  // Preprocess, del empty entries
+  for (map<string, vector<map<string, vector<int> > > >::iterator it =
+           condTable.begin();
+       it != condTable.end(); ++it) {
+    string funcNameStr = it->first;
+    if (condTable[funcNameStr][0]["entry"].empty()) {
+      totalCondNum--;
+      condTable[funcNameStr][0].erase("entry");
+      if (condTable[funcNameStr][0].empty()) {
+        condTable[funcNameStr].erase(condTable[funcNameStr].begin());
+      }
+      nameTable[funcNameStr].erase(nameTable[funcNameStr].begin());
+    }
+  }
+
+  // printCondTable();
+
   // Calculate number of conditions that fits the requirements (each condition
   // individually affects blabla)
 
@@ -126,6 +143,7 @@ void calMCDCCov() {
     }
   }
   printCondTable();
+  printNameTable();
 
   for (map<string, vector<vector<string> > >::iterator it = nameTable.begin();
        it != nameTable.end(); ++it) {
@@ -256,8 +274,6 @@ extern "C" void getScanSig() {
 }
 
 extern "C" void mainInitExit() {
-  printNameTable();
-
   calMCDCCov();
 
   printf("\n Main function Exits\n");
@@ -299,10 +315,21 @@ extern "C" void updateNameTable(char* funcName, char* bbName,
   }
   // cout << bbNameStr << endl;
 
+  int isIfEnd = (bbNameStr.find(ifTermLabel) != string::npos);
+  int isIfThen = (bbNameStr.find(thenLabel) != string::npos);
+  int isWhileBegin = (bbNameStr.find(whileBeginLabel) != string::npos);
+  int isWhileBody = (bbNameStr.find(whileBody) != string::npos);
+  int isForBegin = (bbNameStr.find(forBeginLabel) != string::npos);
+  int isForBody = (bbNameStr.find(forBody) != string::npos);
+  int isEntry = (bbNameStr.find(entryLabel) != string::npos);
+
+  int newDeciStart = (isWhileBody || isForBody || isIfEnd || isIfThen ||
+                      isWhileBegin || isForBegin || isEntry);
+
   if (nameTable.count(funcNameStr)) {
     // If funcName already exists in the table
     // Check if a new decision begins
-    if (isBeginLabel) {
+    if (isBeginLabel || newDeciStart) {
       // Is new decision begins
       vector<string> tmp;
       tmp.push_back(bbNameStr);
@@ -461,16 +488,6 @@ extern "C" void updateCondTable(char* funcName, char* bbName, char* handler,
   string funcNameStr(funcName);
   string bbNameStr(bbName);
 
-  int isIfEnd = (bbNameStr.find(ifTermLabel) != string::npos);
-  int isIfThen = (bbNameStr.find(thenLabel) != string::npos);
-  int isWhileBegin = (bbNameStr.find(whileBeginLabel) != string::npos);
-  int isWhileBody = (bbNameStr.find(whileBody) != string::npos);
-  int isForBegin = (bbNameStr.find(forBeginLabel) != string::npos);
-  int isForBody = (bbNameStr.find(forBody) != string::npos);
-  int isEntry = (bbNameStr.find(entryLabel) != string::npos);
-
-  int newDeciStart = (isWhileBody || isForBody || isIfEnd || isIfThen ||
-                      isWhileBegin || isForBegin || isEntry);
   int max_len = -1;
 
   if (scan_num < 2) {
