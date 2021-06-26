@@ -1,4 +1,4 @@
-# MC-DC_Coverage_Calculating
+# MC_DC_Coverage_Calculating
 This is a tool that can analyze MC/DC coverage of a program.
 Only my homework for Software Testing, so don't expect it being fast.
 
