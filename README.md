@@ -3,6 +3,7 @@ This is a tool that can analyze MC/DC coverage of a program.
 Only my homework for Software Testing, so don't expect it being fast.
 
 Method to calculate coverage:
+
 $$
 Coverage = \frac{\text{the number of valid test cases}}{2 * \text{the number of conditions}}\\
 
